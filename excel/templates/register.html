@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Cargar Productos</title>
+</head>
+<body>
+    <h1>Cargar Productos</h1>
+    
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="file" name="excel_file">
+        <br><br>
+        <input type="submit" value="Cargar">
+    </form>
+</body>
+</html>
