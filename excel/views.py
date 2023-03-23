@@ -1,49 +1,100 @@
 from django.shortcuts import render
-import pandas as pd
-from django.http import HttpResponse
-from .models import Producto
 from django.views import View
-
+from django.views.generic import CreateView, ListView, UpdateView, DeleteView
+from django.urls import reverse_lazy
+from django.shortcuts import redirect
+from django.contrib import messages
 
 from django.core.exceptions import ValidationError
+from .models import Agenda, Service
+import pandas as pd
 
-class CargarProductosView(View):
+
+class AgendaUploadView(View):
+    template_name = 'register.html'
+
     def get(self, request):
-        return render(request, 'register.html')
-    
-    def post(self, request):
-        excel_file = request.FILES["excel_file"]
-        
-        # Leer el archivo Excel con Pandas
-        df = pd.read_excel(excel_file)
-        
-        # Iterar sobre las filas del DataFrame
-        for index, row in df.iterrows():
-            nombre = row['nombre']
-            descripcion = row['descripcion']
-            precio = row['precio']
-            stock = row['stock']
-            
-            # Validar los datos
-            try:
-                if not nombre or not descripcion or not precio or not stock:
-                    raise ValidationError("Todos los campos son requeridos")
-                
-                precio = float(precio)
-                if precio <= 0:
-                    raise ValidationError("El precio debe ser mayor que cero")
-                
-                stock = int(stock)
-                if stock < 0:
-                    raise ValidationError("El stock no puede ser negativo")
-            except ValidationError as e:
-                # Si hay un error de validación, agregar el error al diccionario de errores del formulario y continuar con la siguiente fila
-                form.add_error(None, e)
-                continue
-            
-            # Crear un objeto Producto para cada fila
-            producto = Producto(nombre=nombre, descripcion=descripcion, precio=precio, stock=stock)
-            producto.save()
-        
-        return HttpResponse("Productos cargados correctamente")
+        return render(request, self.template_name)
 
+    def post(self, request):
+        # Verificar si se seleccionó un archivo
+        if 'excel_file' not in request.FILES:
+            return render(request, self.template_name, {'error_message': 'Por favor, seleccione un archivo Excel para cargar'})
+        # Si se seleccionó un archivo, continuar con la carga
+        excel_file = request.FILES.get('excel_file')
+        df = pd.read_excel(excel_file)
+        agendas = []
+        errors = []
+        # Procesar cada fila del archivo
+        for index, row in df.iterrows():
+            service = Service.objects.filter(tipo_cancha=row['tipo_cancha']).first()
+            if service is None:
+                errors.append(f"El tipo de cancha '{row['tipo_cancha']}' no existe.")
+                continue
+            agenda = Agenda(
+                service=service,
+                dia=row['dia'],
+                horario=row['horario'],
+                user=request.user,
+            )
+            agendas.append(agenda)
+        try:
+            # Crear las agendas en la base de datos
+            Agenda.objects.bulk_create(agendas)
+            if errors:
+                return render(request, self.template_name, {'error_message': errors})
+            else:
+                messages.success(request, 'Agendas cargadas exitosamente')
+                return redirect(to='agendar')
+
+        except Exception as e:
+            # Si ocurre un error, manejarlo y mostrar un mensaje de error
+            return render(request, self.template_name, {'error_message': str(e)})
+
+
+
+
+class ServiceCreateView(CreateView):
+
+    model = Service
+    template_name = 'services/registro.html'
+    fields = ['name','numercion']
+    success_url = reverse_lazy('services:services_lista')
+    
+class ServiceListView(ListView):
+    template_name = 'services/services_list.html'
+
+    def get_queryset(self):
+        return Service.objects.all().order_by('-pk')
+
+    
+
+class AgendaCreateView(CreateView):
+
+    model = Agenda
+    template_name = 'services/agenda_registro.html'
+    fields = ['service', 'dia', 'horario']
+    success_url = reverse_lazy('services:agenda_lista')
+    
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        return super().form_valid(form)
+    
+
+
+
+class AgendaListView(ListView):
+
+    template_name = 'services/agenda_list.html'
+
+    def get_queryset(self):
+        return Agenda.objects.filter().order_by('-pk')
+    
+
+
+
+service_registro = ServiceCreateView.as_view()
+agenda_registro = AgendaCreateView.as_view()
+
+service_lista = ServiceListView.as_view()
+agenda_lista = AgendaListView.as_view()

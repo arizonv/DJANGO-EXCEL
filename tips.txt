@@ -1,22 +1,16 @@
-from datetime import date
-from django.db import models
-from django.conf import settings
-from django.core.validators import RegexValidator
-from django.core.exceptions import ValidationError
-from django.db.models.fields.related import ForeignKey
-
-
-class Service(models.Model):
-    tipo_cancha = models.CharField(verbose_name="Name", max_length=30)
+creame una funcion basada en clases para registrar las agendas desde un excel cargado desde un html utilizando pandas  y el siguiente modelo de clases como referencia class Service(models.Model):
+    tipo_cancha = models.CharField(verbose_name="Name", max_length=200)
     NUMERCION_CANCHA = (
-        ("1", "1"),
-        ("2", "2"),
-        ("3", "3"),
+        ("1", "01"),
+        ("2", "02"),
+        ("3", "03"),
+        ("4", "04"),
+        ("5", "05"),
     )
-    numeracion = models.CharField(verbose_name="Cancha",max_length=10, choices=NUMERCION_CANCHA)
+    numeracion = models.CharField(max_length=10, choices=NUMERCION_CANCHA)
     
     def __str__(self):
-        return f'Cancha: {self.numeracion} - Tipo: {self.tipo_cancha}'
+        return f'{self.tipo_cancha}'
 
 def validar_dia(value):
     today = date.today()
@@ -45,7 +39,7 @@ class Agenda(models.Model):
     )
     
     class Meta:
-        unique_together = ('dia','horario','service')
+        unique_together = ('horario', 'dia','service')
         
     def __str__(self):
         return f'{self.dia.strftime("%b %d %Y")} - {self.get_horario_display()} - {self.service}'

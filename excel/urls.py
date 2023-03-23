@@ -1,6 +1,6 @@
 from django.urls import path
-from .views import CargarProductosView
+from .views import AgendaUploadView
 
 urlpatterns = [
-    path('cargar_productos/', CargarProductosView.as_view(), name='cargar_productos'),
+    path('register/', AgendaUploadView.as_view(), name='agendar'),
 ]
