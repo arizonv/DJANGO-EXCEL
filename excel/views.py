@@ -12,7 +12,7 @@ import datetime
 
 
 class AgendaUploadView(View):
-    template_name = 'register.html'
+    template_name = 'upload_excel.html'
 
     def get(self, request):
         return render(request, self.template_name)
