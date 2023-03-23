@@ -1,22 +1,16 @@
-<h1>Cargar Agendas</h1>
+  {% if error_message %}
+  <p class="text-danger">{{ error_message }}</p>
+  {% endif %}
 
-{% if error_message %}
-<div class="alert alert-danger">
-  {{ error_message }}
-</div>
-{% endif %}
+  {% if success_message %}
+  <p class="text-success">{{ success_message }}</p>
+  {% endif %}
 
-{% if message %}
-<div class="alert alert-success">
-  {{ message }}
-</div>
-{% endif %}
-
-<form method="POST" enctype="multipart/form-data">
-  {% csrf_token %}
-  <div class="form-group">
-    <label for="excel_file">Archivo Excel:</label>
-    <input type="file" name="excel_file" class="form-control-file" required>
-  </div>
-  <button type="submit" class="btn btn-primary">Cargar</button>
-</form>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="form-group">
+      <label for="excel_file">Archivo Excel:</label>
+      <input type="file" name="excel_file" class="form-control-file" id="excel_file">
+    </div>
+    <button type="submit" class="btn btn-primary">Cargar</button>
+  </form>

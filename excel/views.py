@@ -8,6 +8,7 @@ from django.contrib import messages
 from django.core.exceptions import ValidationError
 from .models import Agenda, Service
 import pandas as pd
+import datetime
 
 
 class AgendaUploadView(View):
@@ -18,19 +19,33 @@ class AgendaUploadView(View):
 
     def post(self, request):
         # Verificar si se seleccionó un archivo
-        if 'excel_file' not in request.FILES:
+        excel_agenda = 'excel_file'
+        if excel_agenda not in request.FILES:
             return render(request, self.template_name, {'error_message': 'Por favor, seleccione un archivo Excel para cargar'})
+
         # Si se seleccionó un archivo, continuar con la carga
-        excel_file = request.FILES.get('excel_file')
+        excel_file = request.FILES[excel_agenda]
         df = pd.read_excel(excel_file)
+
+        # Convertir la columna 'dia' a datetime
+        df['dia'] = pd.to_datetime(df['dia'], format='%Y-%m-%d')
+
         agendas = []
         errors = []
         # Procesar cada fila del archivo
         for index, row in df.iterrows():
-            service = Service.objects.filter(tipo_cancha=row['tipo_cancha']).first()
-            if service is None:
+            # Validar que el día sea un día hábil de la semana
+            date = row['dia'].date()
+            if date.weekday() >= 5:
+                errors.append(f"El día '{row['dia']}' no es un día hábil de la semana.")
+                continue
+
+            try:
+                service = Service.objects.get(tipo_cancha=row['tipo_cancha'])
+            except Service.DoesNotExist:
                 errors.append(f"El tipo de cancha '{row['tipo_cancha']}' no existe.")
                 continue
+
             agenda = Agenda(
                 service=service,
                 dia=row['dia'],
@@ -38,18 +53,20 @@ class AgendaUploadView(View):
                 user=request.user,
             )
             agendas.append(agenda)
+
         try:
             # Crear las agendas en la base de datos
             Agenda.objects.bulk_create(agendas)
             if errors:
                 return render(request, self.template_name, {'error_message': errors})
             else:
-                messages.success(request, 'Agendas cargadas exitosamente')
-                return redirect(to='agendar')
+                return render(request, self.template_name, {'success_message': {'message': 'Agendas cargadas exitosamente.'}})
 
         except Exception as e:
             # Si ocurre un error, manejarlo y mostrar un mensaje de error
             return render(request, self.template_name, {'error_message': str(e)})
+
+
 
 
 
@@ -67,8 +84,6 @@ class ServiceListView(ListView):
     def get_queryset(self):
         return Service.objects.all().order_by('-pk')
 
-    
-
 class AgendaCreateView(CreateView):
 
     model = Agenda
@@ -80,9 +95,6 @@ class AgendaCreateView(CreateView):
         form.instance.user = self.request.user
         return super().form_valid(form)
     
-
-
-
 class AgendaListView(ListView):
 
     template_name = 'services/agenda_list.html'
