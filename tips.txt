@@ -43,3 +43,31 @@ class Agenda(models.Model):
         
     def __str__(self):
         return f'{self.dia.strftime("%b %d %Y")} - {self.get_horario_display()} - {self.service}'
+
+
+
+
+
+
+class Horario(models.Model):
+    HORARIOS_AM = (
+        ("09", "09:00 AM"),
+        ("10", "10:00 AM"),
+        ("11", "11:00 AM"),
+        ("12", "12:00 PM"),
+    )
+
+    HORARIOS_PM = (
+        ("17", "05:00 PM"),
+        ("18", "06:00 PM"),
+        ("19", "07:00 PM"),
+        ("20", "08:00 PM"),
+        ("21", "09:00 PM"),
+        ("22", "10:00 PM"),
+    )
+    SEPARADOR = (None, "---------")
+
+    horario = models.CharField(max_length=10, choices=HORARIOS_AM + (SEPARADOR) + HORARIOS_PM)
+
+    def __str__(self):
+        return f'{self.get_horario_display()}'
