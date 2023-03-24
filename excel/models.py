@@ -16,7 +16,7 @@ class Service(models.Model):
     numeracion = models.CharField(verbose_name="Cancha",max_length=10, choices=NUMERCION_CANCHA)
     
     def __str__(self):
-        return f'{self.tipo_cancha}  ;   C.0{self.numeracion}  '
+        return f'{self.tipo_cancha}  :   C.0{self.numeracion}  '
 
 def validar_dia(value):
     today = date.today()

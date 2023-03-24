@@ -25,7 +25,7 @@ class AgendaUploadView(View):
         excel_file = request.FILES[excel_agenda]
         df = pd.read_excel(excel_file)
         # Convertir la columna 'dia' a datetime
-        df['dia'] = pd.to_datetime(df['dia'], format='%Y-%m-%d')
+        df['dia'] = pd.to_datetime(df['dia'], format='%d/%m/%Y')
         agendas = []
         errors = []
         # Procesar cada fila del archivo
@@ -36,9 +36,9 @@ class AgendaUploadView(View):
                 errors.append(f"El día '{row['dia']}' no es un día hábil de la semana.")
                 continue
             try:
-                service = Service.objects.get(tipo_cancha=row['tipo_cancha'])
+                service = Service.objects.get(tipo_cancha=row['tipo_cancha'], numeracion=row['numeracion'])
             except Service.DoesNotExist:
-                errors.append(f"El tipo de cancha '{row['tipo_cancha']}' no existe.")
+                errors.append(f"El tipo de cancha '{row['tipo_cancha']}' con numeración '{row['numeracion']}' no existe.")
                 continue
             agenda = Agenda(
                 service=service,
