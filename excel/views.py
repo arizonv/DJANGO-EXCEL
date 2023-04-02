@@ -16,6 +16,7 @@ class AgendaUploadView(View):
 
     def get(self, request):
         return render(request, self.template_name)
+        
     def post(self, request):
         # Verificar si se seleccionó un archivo
         excel_agenda = 'excel_file'
